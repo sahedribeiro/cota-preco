@@ -1,0 +1,37 @@
+{% extends 'requests_base.html' %}
+{% block content %}
+<p><a href="/requests/{{ purchase.id }}/proformas">← Proformas</a> · <a href="/requests/{{ purchase.id }}">Requisição</a></p>
+<h1>Rever proforma #{{ record.id }}</h1>
+<p>Fornecedor identificado: <strong>{{ draft.supplier_name or 'Por confirmar' }}</strong> · Referência: {{ draft.document_reference or 'Por indicar' }}</p>
+<p>Data no documento: {{ draft.document_date or 'Desconhecida' }} · Validade declarada: {{ draft.valid_until or 'Desconhecida' }}</p>
+<p><a href="/requests/{{ purchase.id }}/proformas/{{ record.id }}/document">Descarregar original</a></p>
+{% if draft.warnings %}<p class="form-notice">{{ draft.warnings }}</p>{% endif %}
+<p>Confirma o vendedor, o artigo, a moeda e o preço por unidade. Não uses o total da linha como preço unitário. Guardar confirma a tua revisão. Stock, validade e equivalência para comparação continuam a ser validados na requisição.</p>
+{% if not suppliers %}<p><a href="/suppliers/new">Cadastra primeiro o fornecedor</a> e volta a esta página; não precisas de extrair de novo.</p>{% endif %}
+<form method="post" action="/requests/{{ purchase.id }}/proformas/{{ record.id }}/save" id="proforma-batch">
+<section class="edit-card"><h2>Dados comuns da proforma</h2><div class="edit-grid">
+<label>Fornecedor de todas as novas ofertas<select name="supplier_id" required><option value="">Escolher vendedor</option>{% for supplier in suppliers %}<option value="{{ supplier.id }}" {% if supplier.id == default_supplier %}selected{% endif %}>{{ supplier.name }}</option>{% endfor %}</select></label>
+<label>Quem reviu (uma vez)<input name="reviewer" required maxlength="100" value="{{ default_reviewer }}"></label>
+</div><p>Sem moeda indicada no documento, usamos AOA por defeito; podes corrigir por linha. As associações exactas são propostas para revisão. Linhas sem artigo escolhido ficam por importar.</p>
+<p role="status" aria-live="polite"></p><button class="send">Guardar linhas associadas</button></section>
+{% for line in draft.lines %}{% set index = loop.index0 %}{% set key = record.id|string ~ ':' ~ index|string %}
+<section class="edit-card" id="line-{{ index }}"><h2>Linha {{ loop.index }} · {{ line.description }}</h2>
+<p>Referência: {{ line.reference or 'Desconhecida' }} · Quantidade no documento: {{ line.quantity or 'Desconhecida' }} {{ line.unit or '' }}</p>
+<blockquote>{{ line.evidence }}</blockquote>
+{% if saved.get(key) %}{% set offer = saved[key] %}
+<p class="form-notice">Guardada: {{ offer.product_name }} · {{ offer.unit_price|money(offer.currency) }} · Oferta #{{ offer.id }}.</p>
+<p>Revisão de {{ offer.evidence_json.reviewer }} · {{ offer.evidence_json.reviewed_at }} · {{ offer.evidence_json.notes }}</p>
+{% else %}
+<div class="edit-grid">
+<label>Artigo da requisição<select name="line_{{ index }}_item_id"><option value="">Não importar agora / escolher artigo</option>{% for item in items %}<option value="{{ item.id }}" {% if suggestions[index] == item.id %}selected{% endif %}>#{{ item.id }} · {{ item.description }} · {{ item.unit or 'Unidade por indicar' }}</option>{% endfor %}</select></label>
+<label>Produto cotado<input name="line_{{ index }}_product_name" maxlength="300" value="{{ line.description }}"></label>
+<label>Preço unitário<input name="line_{{ index }}_unit_price" type="number" min="0.01" step="0.01" value="{{ line.unit_price or '' }}"></label>
+<label>Moeda ISO (AOA, USD, EUR…)<input name="line_{{ index }}_currency" pattern="[A-Z]{3}" maxlength="3" value="{{ line.currency or 'AOA' }}"></label>
+<label>IVA<select name="line_{{ index }}_vat"><option value="unknown">Por confirmar</option><option value="included" {% if line.vat_included is sameas true %}selected{% endif %}>Incluído</option><option value="excluded" {% if line.vat_included is sameas false %}selected{% endif %}>Excluído</option></select></label>
+
+</div>
+<label>Observações (opcional)<textarea name="line_{{ index }}_notes" maxlength="2000" placeholder="Regista descontos, quantidade mínima, diferenças de unidade ou outras condições."></textarea></label>
+{% endif %}</section>
+{% else %}<p>Não foram identificadas linhas de produto. Confirma o original.</p>{% endfor %}
+<p><button class="send">Guardar linhas associadas</button></p></form>
+{% endblock %}

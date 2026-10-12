@@ -1,0 +1,36 @@
+{% set history = offer.review_history_json or [] %}
+{% set last = history[-1] if history else {} %}
+{% set labels = {'unknown':'Por confirmar', 'yes':'Sim', 'no':'Não', 'included':'Incluído', 'excluded':'Excluído', 'new':'Novo', 'used':'Usado', 'in':'Disponível', 'out':'Indisponível'} %}
+{% if last and last.action == 'save' %}
+<p class="form-notice">Revisão manual de {{ last.reviewer }}: correspondência {{ labels[last.match] }}, unidade {{ labels[last.unit] }}, IVA {{ labels[last.vat] }}, condição {{ labels[last.condition] }}, stock {{ labels[last.stock] }}.</p>
+{% elif last %}<p class="draft-note">Revisão revogada. A comparação volta a usar os dados da fonte.</p>{% endif %}
+<details><summary>Rever oferta{% if history %} · {{ history|length }} registo(s){% endif %}</summary>
+<p class="draft-note">Os valores da tabela são os dados originais da fonte. A revisão complementa a comparação sem alterar o preço nem a confiança automática. O nome é declarado, sem autenticação. Confirma apenas o que verificaste.</p>
+{% if is_document or not result.stale %}
+<form method="post" action="/requests/{{ purchase.id }}/offers/{{ offer.id }}/{{ 'document-review' if is_document else 'review' }}" class="edit-card">
+<div class="edit-grid">
+<label>Quem reviu<input name="reviewer" required maxlength="100" value="{{ last.reviewer or '' }}"></label>
+{% for field, title, options in [
+('match','Produto e especificações correspondem ao pedido?', ['unknown','yes','no']),
+('unit','O preço corresponde a uma unidade do artigo (' ~ (item.unit or 'por indicar') ~ ')?', ['unknown','yes','no']),
+('vat','IVA no preço publicado', ['unknown','included','excluded']),
+('condition','Condição do produto', ['unknown','new','used']),
+('stock','Disponibilidade verificada', ['unknown','in','out'])] %}
+<label>{{ title }}<select name="{{ field }}">{% for option in options %}<option value="{{ option }}" {% if last.action == 'save' and last[field] == option %}selected{% endif %}>{{ labels[option] }}</option>{% endfor %}</select></label>
+{% endfor %}
+{% if is_document %}
+<label>Validade confirmada (inclusive, UTC)<input type="date" name="valid_until" value="{{ last.valid_until or '' }}"></label>
+<label>Quantidade abrangida pelo preço<input type="number" name="covered_quantity" min="0.001" max="999999999" step="0.001" value="{{ last.covered_quantity or '' }}"></label>
+<label>Condições comerciais aplicáveis à quantidade pedida?<select name="conditions"><option value="unknown">Por confirmar</option><option value="yes" {% if last.conditions == 'yes' %}selected{% endif %}>Sim, confirmei</option></select></label>
+{% endif %}
+</div>
+<label>Como confirmaste? Referência ou observações<textarea name="notes" required maxlength="2000" placeholder="Indica a evidência usada nesta revisão."></textarea></label>
+<button class="send" name="action" value="save">Guardar revisão</button>
+{% if last.action == 'save' %}<button class="send" name="action" value="revoke">Revogar revisão</button>{% endif %}
+</form>
+{% else %}<p>Actualiza a pesquisa para rever uma oferta válida. Esta revisão antiga não permite escolher um vencedor.</p>{% endif %}
+{% if history %}<h4>Histórico de revisão (UTC)</h4><ul>
+{% for entry in history|reverse %}<li><strong>{{ entry.reviewer }}</strong> · {{ entry.reviewed_at }} · {{ 'Revogada' if entry.action == 'revoke' else 'Guardada' }}
+{% if entry.action == 'save' %}<br>Correspondência: {{ labels[entry.match] }} · Unidade: {{ labels[entry.unit] }} · IVA: {{ labels[entry.vat] }} · Condição: {{ labels[entry.condition] }} · Stock: {{ labels[entry.stock] }}{% endif %}
+{% if is_document %}<br>Validade: {{ entry.valid_until or 'Por confirmar' }} · Quantidade abrangida: {{ entry.covered_quantity or 'Por confirmar' }} · Condições: {{ labels.get(entry.conditions, 'Por confirmar') }}{% endif %}<br>{{ entry.notes }}</li>{% endfor %}</ul>{% endif %}
+</details>

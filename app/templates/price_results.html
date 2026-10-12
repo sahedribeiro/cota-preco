@@ -1,0 +1,26 @@
+<h2 class="edit-heading">Pesquisar e comparar preços</h2>
+<p class="draft-note">Escolhe até 5 fornecedores por artigo. Reutilizamos resultados durante 24 horas; usa Actualizar preços para consultar novamente. Esta consulta não consome tokens de IA.</p>
+{% if not suppliers %}<p class="form-notice">Nenhum fornecedor tem leitura activa. Em <a href="/suppliers">Fornecedores</a>, confirma o website e permite a leitura. Podes configurar o URL de pesquisa da loja com {query}.</p>{% endif %}
+{% if suppliers and items %}{% include 'search_batch.html' %}{% endif %}
+{% for item in items %}
+<section class="edit-card" id="prices-{{ item.id }}"><h3><strong>{{ item.normalized_description or item.description }}</strong></h3>
+<p>Quantidade: {{ item.quantity if item.quantity is not none else 'Por indicar' }} {{ item.unit or '' }}</p>
+{% if suppliers %}<form method="post" action="/requests/{{ purchase.id }}/items/{{ item.id }}/search" class="price-search-form"><input type="hidden" name="item_ids" value="{{ item.id }}">
+<fieldset><legend>Fornecedores (selecciona 1 a 5)</legend>{% for supplier in suppliers %}<label class="source-choice"><input type="checkbox" name="supplier_ids" value="{{ supplier.id }}" {% if loop.index <= 5 %}checked{% endif %}>{{ supplier.name }}</label>{% endfor %}</fieldset>
+<button class="send" name="refresh" value="false">Pesquisar preços</button> <button class="send" name="refresh" value="true">Actualizar preços</button>
+<p role="status" hidden>A consultar os fornecedores seleccionados… Alguns sites podem demorar. Aguarda sem reenviar.</p>
+</form>{% endif %}
+{% set result = results.get(item.id) %}
+{% if result %}<p class="form-notice">{{ result.reason }}</p>{% if result.search %}<p class="draft-note">Termo pesquisado: <strong>{{ result.search.search_query }}</strong></p><p class="draft-note">{{ 'Cache reutilizada' if result.search.raw_result_json.cache_hit else 'Consulta realizada' }} · {{ result.search.searched_at.strftime('%d/%m/%Y %H:%M') }} UTC · {{ 'Desactualizado' if result.stale else 'Válido até ' ~ result.search.expires_at.strftime('%d/%m/%Y %H:%M') ~ ' UTC' }}</p>
+{% if result.search.status == 'partial' %}<p class="draft-note">Consulta incompleta: as ofertas recolhidas mantêm a sua validade; as fontes que falharam não foram verificadas.</p>{% endif %}
+{% for source in result.search.raw_result_json.sources %}<p class="draft-note"><strong>{{ source.name }}:</strong> {{ source.message }} {% if source.url %}<a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">Consultar site ↗</a>{% endif %}</p>{% endfor %}
+{% else %}<p>Sem pesquisa web; as proformas validadas podem concorrer.</p>{% endif %}
+<div class="table-scroll"><table><thead><tr><th>Produto / fornecedor</th><th>Preço unitário</th><th>Total calculado</th><th>IVA</th><th>Disponibilidade</th><th>Confiança</th><th>Fonte / data</th></tr></thead><tbody>
+{% for offer in result.offers %}<tr id="offer-{{ offer.id }}"><td>{{ offer.product_name }}<br>{{ result.names.get(offer.supplier_id, 'Fornecedor indisponível') }}{% if result.winner and result.winner.id == offer.id %}<br><strong>Menor preço comparável</strong>{% endif %}</td>
+<td>{{ offer.unit_price|money(offer.currency) if offer.unit_price is not none else offer.evidence_json.status }}</td>
+<td>{% if offer.unit_price is not none and item.quantity is not none and result['values'][offer.id].matched and not offer.evidence_json.restricted and not result.stale %}{{ (offer.unit_price * item.quantity)|money(offer.currency) }}{% else %}Não calculado{% endif %}</td>
+<td>{{ 'Incluído' if offer.vat_included is sameas true else 'Excluído; taxa desconhecida' if offer.vat_included is sameas false else 'Desconhecido' }}</td><td>{{ offer.availability or 'Desconhecida' }}<br>Condição: {{ {'RefurbishedCondition':'Recondicionado', 'NewCondition':'Novo', 'UsedCondition':'Usado'}.get((offer.evidence_json.condition or '').split('/')[-1], 'Desconhecida') }}<br>Transporte: desconhecido</td>
+<td>{{ offer.match_confidence }}%<br>{% for reason in offer.evidence_json.reasons %}{{ reason }}<br>{% endfor %}</td><td><a href="{{ offer.product_url }}" target="_blank" rel="noopener noreferrer">Abrir fonte ↗</a><br>{{ offer.observed_at.strftime('%d/%m/%Y %H:%M') }} UTC</td></tr>
+<tr><td colspan="7">{% include 'offer_review.html' %}</td></tr>{% else %}<tr><td colspan="7">Nenhuma oferta encontrada nas páginas consultadas. A disponibilidade continua por confirmar.</td></tr>{% endfor %}</tbody></table></div>
+{% else %}<p class="draft-note">Não pesquisado.</p>{% endif %}
+</section>{% endfor %}

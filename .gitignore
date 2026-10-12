@@ -1,0 +1,24 @@
+.env
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+data/*
+!data/uploads/
+data/uploads/*
+!data/uploads/.gitkeep
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.env.*
+!.env.example
+work/
+TestResults/
+.vs/
+*.user
+
+# Documentos comerciais privados usados apenas na validação local
+tests/fixtures/girassol/*
+!tests/fixtures/girassol/README.md

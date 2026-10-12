@@ -1,0 +1,26 @@
+<article class="message user"><span class="message-label">TU</span><p>{{ message }}</p></article>
+<article class="message assistant"><span class="message-label">KOTA</span><p>{{ reply }}</p>
+{% if draft %}
+<section class="purchase-draft" aria-label="Rascunho de requisição">
+  <h2>{{ draft.title }}</h2>
+  <p class="draft-note">Rascunho para rever · Preços e fornecedores ainda não pesquisados.</p>
+  {% for item in draft.items %}
+  <div class="draft-item"><strong>{{ item.normalized_description }}</strong>
+    <p>Quantidade: {{ item.quantity if item.quantity is not none else 'Por indicar' }} · {{ item.unit or 'Unidade por indicar' }}</p>
+    {% if item.brand %}<p>Marca: {{ item.brand }}</p>{% endif %}
+    {% if item.model %}<p>Modelo: {{ item.model }}</p>{% endif %}
+    {% if item.reference %}<p>Referência: {{ item.reference }}</p>{% endif %}
+    {% for spec in item.specifications %}<span class="spec-tag">{{ spec.name }}: {{ spec.value }}</span>{% endfor %}
+  </div>
+  {% endfor %}
+  {% for condition in draft.conditions %}<p>{{ condition }}</p>{% endfor %}
+<form action="/requests" method="post">
+  <input type="hidden" name="draft_json" value="{{ draft.model_dump_json() }}">
+  <button class="send" type="submit">Guardar requisição →</button>
+</form>
+<p class="draft-note">Guarda esta versão para a rever e editar. Não envia nada a fornecedores.</p>
+</section>
+{% endif %}
+{% if usage_warning %}<p role="status">{{ usage_warning }}</p>{% endif %}
+</article>
+{% if partial %}<input type="hidden" id="chat-context" name="context" value="{{ chat_context }}" hx-swap-oob="true">{% endif %}

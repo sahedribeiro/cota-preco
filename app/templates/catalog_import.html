@@ -1,0 +1,21 @@
+{% extends 'requests_base.html' %}{% block content %}
+<h1>Importação #{{ record.id }}</h1><p><a href="/catalog">Catálogo</a> · Estado: {{ record.status }}</p>
+{% set draft=record.draft_json %}
+{% if record.status=='imported' %}<p>Importação concluída. Os preços e as excepções estão no catálogo.</p>
+{% elif not draft.get('rows') and not draft.get('extracted') and not draft.get('legacy_import_id') %}
+<p>Os blocos concluídos ficam guardados e são reutilizados ao retomar. O texto é enviado por blocos; páginas digitalizadas/imagens usam visão OpenAI. Cada bloco consome tokens. Não há repetição automática de chamadas falhadas.</p>
+<form method="post" action="/catalog/imports/{{ record.id }}/extract"><button class="send">Extrair / retomar extracção</button></form>
+{% else %}
+<p>{{ draft.get('warnings','') }}{% if draft.get('conflict') %} Dados contraditórios entre blocos; as linhas ficam para revisão.{% endif %}</p>
+<form method="post" action="/catalog/imports/{{ record.id }}/save">
+<label>Fornecedor<select name="supplier_id"><option value="">Criar fornecedor abaixo</option>{% for supplier in suppliers %}<option value="{{ supplier.id }}" {% if supplier.id==record.supplier_id or supplier.name==draft.get('supplier_name') %}selected{% endif %}>{{ supplier.name }}</option>{% endfor %}</select></label>
+<label>Nome do novo fornecedor (guardar confirma a criação)<input name="new_supplier" maxlength="200" value="{{ draft.get('supplier_name') or '' }}"></label>
+{% if draft.get('headers') %}
+<p>{{ draft.rows|length }} linhas de dados. Indica as colunas; apenas descrição e preço são obrigatórios.</p>
+<div class="edit-grid">{% for field in fields %}<label>{{ field }}<select name="{{ field }}"><option value="">Não consta</option>{% for column in draft.headers %}<option value="{{ loop.index0 }}" {% if mapping.get(field)==loop.index0|string %}selected{% endif %}>{{ column }}</option>{% endfor %}</select></label>{% endfor %}</div>
+<label>Separador decimal<select name="separator"><option value="." {% if mapping.get('separator')=='.' %}selected{% endif %}>Ponto (1234.56)</option><option value="," {% if mapping.get('separator')==',' %}selected{% endif %}>Vírgula (1.234,56)</option></select></label>
+<label>Moeda quando a coluna está vazia (opcional)<input name="default_currency" maxlength="3" value="AOA" placeholder="AOA"></label>
+<details><summary>Amostra das primeiras linhas</summary>{% for row in draft.rows[:5] %}<p>{{ row|join(' | ') }}</p>{% endfor %}</details>
+{% else %}<p>{{ draft.get('lines',[])|length }} linhas extraídas. Confiança alta e valores válidos entram no catálogo; as dúvidas ficam para revisão.</p>{% endif %}
+<button class="send">Guardar preços no catálogo</button></form>{% endif %}
+{% endblock %}

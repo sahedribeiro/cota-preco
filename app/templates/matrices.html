@@ -1,0 +1,4 @@
+{% extends 'requests_base.html' %}{% block content %}
+<h1>Comparações</h1><p><a class="send" href="/">Nova solicitação</a></p>
+{% for entry in reports %}<section class="edit-card"><h2><a href="/matrices/{{ entry.id }}">{{ entry.data.request_source or 'Solicitação em texto' }}</a></h2><p>{{ entry.data.message or '' }}</p><p>{{ entry.data.summary.items }} artigos · {{ entry.data.summary.suppliers }} fornecedores · {{ entry.data.summary.gaps }} lacunas</p></section>{% else %}<p>Ainda não existem comparações neste fluxo.</p>{% endfor %}
+{% endblock %}

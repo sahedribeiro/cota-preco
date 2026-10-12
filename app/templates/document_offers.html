@@ -1,0 +1,36 @@
+<section class="edit-card" id="document-offers"><h2>Ofertas de proformas</h2>
+<p>Revê várias ofertas da mesma proforma de uma vez. Selecciona apenas as linhas às quais se aplicam as confirmações abaixo; as restantes mantêm a revisão actual.</p>
+{% for group in document_offers|groupby('evidence_json.import_id') %}
+<details class="edit-card"><summary>Validar em lote · Proforma #{{ group.grouper }} · {{ group.list|length }} ofertas</summary>
+<form method="post" action="/requests/{{ purchase.id }}/proformas/{{ group.grouper }}/review-offers" class="document-batch-form">
+<label class="source-choice"><input type="checkbox" data-select-offers>Seleccionar todas as ofertas desta proforma</label>
+{% for offer in group.list %}{% set item = items_by_id[offer.purchase_request_item_id] %}
+<label class="source-choice"><input type="checkbox" name="offer_ids" value="{{ offer.id }}">{{ offer.product_name }} · {{ document_supplier_names[offer.supplier_id] }} · {{ offer.unit_price|money(offer.currency) }} → #{{ item.id }} {{ item.description }} · {{ item.quantity if item.quantity is not none else 'Quantidade por indicar' }} {{ item.unit or 'Unidade por indicar' }}</label>
+{% endfor %}
+<div class="edit-grid">
+<label>Quem reviu<input name="reviewer" required maxlength="100"></label>
+<label>Validade confirmada (inclusive, UTC)<input type="date" name="valid_until"></label>
+{% for field, title, options in [
+('match','Correspondem aos artigos e especificações?', [('unknown','Por confirmar'),('yes','Sim'),('no','Não')]),
+('unit','Preços por unidade pedida?', [('unknown','Por confirmar'),('yes','Sim'),('no','Não')]),
+('vat','IVA comum às linhas seleccionadas', [('unknown','Por confirmar'),('included','Incluído'),('excluded','Excluído')]),
+('stock','Disponibilidade', [('unknown','Por confirmar'),('in','Disponível'),('out','Indisponível')]),
+('condition','Condição', [('unknown','Por confirmar'),('new','Novo'),('used','Usado')]),
+('conditions','Condições comerciais aplicáveis?', [('unknown','Por confirmar'),('yes','Sim')])] %}
+<label>{{ title }}<select name="{{ field }}">{% for value,label in options %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+{% endfor %}
+</div>
+<label class="source-choice"><input type="checkbox" name="quantity_confirmed" value="yes" required>Confirmei que cada oferta seleccionada abrange a quantidade pedida mostrada acima.</label>
+<label>Observações (opcional)<textarea name="notes" maxlength="2000"></textarea></label>
+<p class="draft-note">Dados desconhecidos continuam por confirmar. Só revisões completas e válidas permitem concorrer na comparação.</p>
+<p role="status" aria-live="polite"></p><button class="send">Guardar revisão das seleccionadas</button>
+</form></details>
+{% endfor %}
+{% for offer in document_offers %}
+<section id="document-offer-{{ offer.id }}"><h3>{{ offer.product_name }} · {{ document_supplier_names[offer.supplier_id] }} · {{ offer.unit_price|money(offer.currency) }}</h3>
+<p class="form-notice">{{ results[offer.purchase_request_item_id].document_status[offer.id][1] }}</p>
+<p><a href="/requests/{{ purchase.id }}/proformas/{{ offer.evidence_json.import_id }}#line-{{ offer.evidence_json.line_index }}">Ver documento e revisão da importação</a></p>
+{% with item=items_by_id[offer.purchase_request_item_id], result={'stale':false}, is_document=true %}{% include 'offer_review.html' %}{% endwith %}
+</section>
+{% endfor %}
+</section>

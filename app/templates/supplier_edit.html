@@ -1,0 +1,36 @@
+{% extends 'requests_base.html' %}
+{% block content %}
+<p class="eyebrow">CADASTRO E ORIGEM</p><h1>{{ supplier.name if supplier else 'Adicionar fornecedor' }}</h1>
+{% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+{% if duplicate %}<a href="/suppliers/{{ duplicate.id }}">Abrir fornecedor existente →</a>{% endif %}
+{% if notice %}<p class="form-notice">{{ notice }}</p>{% endif %}
+{% if warning %}<p class="form-notice">{{ warning }}</p>{% endif %}
+<form class="edit-card" action="/suppliers/save{% if supplier %}?supplier_id={{ supplier.id }}{% endif %}" method="post">
+<div class="edit-grid">
+<label>Nome<input name="name" value="{{ values.name or '' }}" required maxlength="200"></label>
+<label>Categoria<input name="category" value="{{ values.category or '' }}" maxlength="100" placeholder="Tecnologia e informática / Saúde"></label>
+<label>Website principal<input name="website" type="url" value="{{ values.website or '' }}" maxlength="1000" placeholder="https://..."></label>
+<label>URL da pesquisa de produtos (opcional)<input name="search_url_template" value="{{ values.search_url_template or '' }}" maxlength="1000" placeholder="https://loja.example/?s={query}"><small>Mesmo domínio do website. Deixa vazio para ler apenas a página cadastrada.</small></label>
+<label>País<input name="country" value="{{ values.country or '' }}" maxlength="100"></label>
+<label>Email<input name="email" type="email" value="{{ values.email or '' }}" maxlength="200"></label>
+<label>Telefone<input name="phone" value="{{ values.phone or '' }}" maxlength="100"></label>
+<label>NIF<input name="tax_id" value="{{ values.tax_id or '' }}" maxlength="100"></label>
+<label>Origem<select name="source_kind">{% for key,label in [('manual','Cadastro manual'),('user_list','Lista fornecida pelo utilizador'),('purchase_order','Ordem de compra'),('proforma','Factura proforma'),('website','Website')] %}<option value="{{ key }}" {% if values.source_kind == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label>Referência da origem (URL ou ficheiro)<input name="source_reference" value="{{ values.source_reference or '' }}" maxlength="1000"></label>
+<label>Estado<select name="active"><option value="true" {% if values.active is not sameas false %}selected{% endif %}>Activo</option><option value="false" {% if values.active is sameas false %}selected{% endif %}>Inactivo</option></select></label>
+<label>Dados revistos por ti?<select name="reviewed"><option value="false">Por verificar</option><option value="true" {% if values.reviewed %}selected{% endif %}>Revistos por mim</option></select></label>
+<label>Permitir leitura pontual do website?<select name="scraping_enabled"><option value="false">Não</option><option value="true" {% if values.scraping_enabled %}selected{% endif %}>Sim, quando eu pedir</option></select></label>
+</div><label>Notas e dúvidas<textarea name="notes" maxlength="3000" rows="4">{{ values.notes or '' }}</textarea></label>
+<p class="draft-note">Guardar não confirma certificações, stock ou preços. Desactivar conserva o registo e as referências existentes.</p><button class="send">Guardar fornecedor</button></form>
+{% if not supplier %}
+<h2 class="edit-heading">Preencher a partir de uma fonte</h2><p>Uma chamada curta à OpenAI por importação. Revê o resultado antes de guardar. Dados extraídos são enviados à OpenAI.</p>
+<form class="edit-card" action="/suppliers/import" method="post" enctype="multipart/form-data">
+<label>Tipo de documento<select name="source_kind"><option value="proforma">Factura proforma</option><option value="purchase_order">Ordem de compra</option></select></label>
+<label>Documento<input type="file" name="document" accept=".pdf,.xlsx,.csv,.txt" required></label><p class="draft-note">Até 10 MB e 8.000 caracteres; sem OCR. Identifica o fornecedor, não o comprador.</p><button class="send">Extrair dados para revisão</button></form>
+<form class="edit-card" action="/suppliers/import" method="post"><input type="hidden" name="source_kind" value="website"><label>URL da página pública<input type="url" name="url" required placeholder="https://.../contactos" maxlength="1000"></label><p class="draft-note">Ao clicar, autorizas a leitura desta página e robots.txt. Sem login, pesquisa de preços ou recolha de páginas em massa.</p><button class="send">Ler website e rever dados</button></form>
+{% else %}
+<p><a href="https://www.google.com/search?q={{ (supplier.name ~ ' Angola website') | urlencode }}" target="_blank" rel="noopener noreferrer">Pesquisar website na web ↗</a></p>
+{% if supplier.website %}<p><a href="{{ supplier.website }}" target="_blank" rel="noopener noreferrer">Abrir website actual ↗</a></p>{% endif %}
+{% if supplier.active and supplier.scraping_enabled and supplier.website %}<form class="edit-card" action="/suppliers/import" method="post"><input type="hidden" name="source_kind" value="website"><input type="hidden" name="url" value="{{ supplier.website }}"><input type="hidden" name="supplier_id" value="{{ supplier.id }}"><p>Lê a página e apresenta uma proposta. Não substitui o cadastro automaticamente.</p><button class="send">Consultar website para revisão</button></form>{% endif %}
+{% endif %}
+{% endblock %}

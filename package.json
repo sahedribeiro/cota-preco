@@ -1,0 +1,14 @@
+{
+  "name": "cota-preco-ai-assets",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./app/static/tailwind.input.css -o ./app/static/tailwind.css --minify",
+    "build:htmx": "node -e \"require('fs').copyFileSync('node_modules/htmx.org/dist/htmx.min.js', 'app/static/htmx.min.js'); require('fs').copyFileSync('node_modules/htmx.org/LICENSE', 'app/static/htmx.LICENSE')\"",
+    "build": "npm run build:css && npm run build:htmx"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.1.13",
+    "tailwindcss": "4.1.13",
+    "htmx.org": "2.0.7"
+  }
+}

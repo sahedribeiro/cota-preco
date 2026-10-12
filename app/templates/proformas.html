@@ -1,0 +1,13 @@
+{% extends 'requests_base.html' %}
+{% block content %}
+<p><a href="/requests/{{ purchase.id }}">← {{ purchase.title }}</a></p>
+<h1>Preços de proformas</h1>
+{% if error %}<p class="form-notice" role="alert">{{ error }}</p>{% endif %}
+<p>Anexa PDF com texto, XLSX, CSV ou TXT. A extracção usa uma chamada à OpenAI; revê os dados antes de guardar. Não há OCR.</p>
+<form class="edit-card" method="post" enctype="multipart/form-data">
+<label>Proforma<input type="file" name="document" accept=".pdf,.xlsx,.csv,.txt" required></label>
+<button class="send">Extrair para revisão</button>
+</form>
+<h2>Documentos importados</h2>
+{% for record in imports %}<p><a href="/requests/{{ purchase.id }}/proformas/{{ record.id }}">Proforma #{{ record.id }} · {{ record.draft_json.supplier_name or 'Fornecedor por identificar' }} · {{ record.created_at.strftime('%d/%m/%Y %H:%M') }} UTC</a></p>{% else %}<p>Ainda não há documentos nesta requisição.</p>{% endfor %}
+{% endblock %}

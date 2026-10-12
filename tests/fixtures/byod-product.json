@@ -1,0 +1,60 @@
+{
+  "@type": "Product",
+  "name": "Port&#xE1;til HP Laptop 15 Intel Core i5 16GB 512GB SSD 15.6&#x27; FHD W11H Prata",
+  "sku": "HP-2026-00004",
+  "brand": {
+    "@type": "Brand",
+    "name": "Loja HP"
+  },
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "AOA",
+    "price": "1200400.00",
+    "availability": "https://schema.org/InStock",
+    "url": "https://store.byod.it.ao/produtos/portatil-hp-laptop-15-intel-core-i5-16gb-512gb-ssd-15-6-fhd-w11h-prata-0016",
+    "shippingDetails": {
+      "@type": "OfferShippingDetails",
+      "shippingRate": {
+        "@type": "MonetaryAmount",
+        "value": "0",
+        "currency": "AOA"
+      },
+      "shippingDestination": {
+        "@type": "DefinedRegion",
+        "addressCountry": "AO"
+      },
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": {
+          "@type": "QuantitativeValue",
+          "minValue": "0",
+          "maxValue": "1",
+          "unitCode": "DAY"
+        },
+        "transitTime": {
+          "@type": "QuantitativeValue",
+          "minValue": "1",
+          "maxValue": "10",
+          "unitCode": "DAY"
+        }
+      }
+    }
+  },
+  "additionalProperty": [
+    {
+      "@type": "PropertyValue",
+      "name": "Marca",
+      "value": "HP"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Modelo",
+      "value": "HP Laptop 15"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "RAM",
+      "value": "16 GB DDR4 (3200 MHz)"
+    }
+  ]
+}

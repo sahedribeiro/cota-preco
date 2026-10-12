@@ -1,0 +1,14 @@
+{% extends 'requests_base.html' %}
+{% block content %}
+<p class="eyebrow">A TUA REDE DE FORNECEDORES</p><h1>Fornecedores</h1>
+<p>Cadastro local · Até 200 resultados. Dados comerciais e websites sujeitos a confirmação.</p>
+<a class="send" href="/suppliers/new">＋ Adicionar ou importar fornecedor</a>
+<form class="edit-card supplier-filter" method="get">
+<label>Pesquisar nome, categoria ou NIF<input name="q" value="{{ q }}" maxlength="100" placeholder="Ex.: informática, saúde, Stylus..."></label>
+<label>Estado<select name="state"><option value="active" {% if state == 'active' %}selected{% endif %}>Activos</option><option value="inactive" {% if state == 'inactive' %}selected{% endif %}>Inactivos</option><option value="all" {% if state == 'all' %}selected{% endif %}>Todos</option></select></label><button class="send">Pesquisar cadastro</button></form>
+<div class="supplier-grid">{% for supplier in suppliers %}
+<article class="request-card"><p class="eyebrow">{{ supplier.category or 'Sem categoria' }}</p><h2><a href="/suppliers/{{ supplier.id }}">{{ supplier.name }}</a></h2><p>{{ supplier.country or 'País por indicar' }} · {{ 'Revisto pelo utilizador' if supplier.reviewed else 'Por verificar' }} · {{ 'Activo' if supplier.active else 'Inactivo' }}</p>
+{% if supplier.website %}<p><a href="{{ supplier.website }}" target="_blank" rel="noopener noreferrer">Abrir website ↗</a></p>{% else %}<p>Website por indicar</p>{% endif %}
+<a href="/suppliers/{{ supplier.id }}">Gerir fornecedor →</a> · <a href="https://www.google.com/search?q={{ (supplier.name ~ ' Angola website') | urlencode }}" target="_blank" rel="noopener noreferrer">Pesquisar na web ↗</a>
+</article>{% else %}<p>Nenhum fornecedor encontrado.</p>{% endfor %}</div>
+{% endblock %}

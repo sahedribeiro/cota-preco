@@ -1,0 +1,19 @@
+<section class="edit-card" id="background-search" data-url="/requests/{{ purchase.id }}/search-jobs">
+<h3>Pesquisar vários artigos</h3>
+<form id="batch-price-search" action="/requests/{{ purchase.id }}/search-jobs" method="post">
+<details><summary>Artigos a pesquisar</summary>
+<label class="source-choice"><input type="checkbox" data-select-search checked>Seleccionar todos</label>
+{% for item in items %}<label class="source-choice"><input type="checkbox" name="item_ids" value="{{ item.id }}" checked>{{ item.description }}</label>{% endfor %}
+</details>
+<fieldset><legend>Fornecedores para os artigos seleccionados (até 5)</legend>
+{% for supplier in suppliers %}<label class="source-choice"><input type="checkbox" name="supplier_ids" value="{{ supplier.id }}" {% if loop.index <= 5 %}checked{% endif %}>{{ supplier.name }}</label>{% endfor %}</fieldset>
+<button class="send" name="refresh" value="false">Pesquisar seleccionados</button>
+<button class="send" name="refresh" value="true">Actualizar preços seleccionados</button>
+</form>
+<p role="status" aria-live="polite">Pronto para pesquisar. A página continua disponível durante a consulta.</p>
+<progress value="0" max="1" hidden></progress>
+<ul data-search-results></ul>
+<button type="button" class="send" data-stop-search hidden>Parar após este artigo</button>
+<button type="button" class="send" data-refresh-results disabled>Actualizar resultados</button>
+<noscript>Activa JavaScript para acompanhar pesquisas em segundo plano.</noscript>
+</section>

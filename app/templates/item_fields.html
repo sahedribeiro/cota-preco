@@ -1,0 +1,4 @@
+<label>Descrição<input name="description" value="{{ item.description }}" required maxlength="500"></label>
+<div class="edit-grid"><label>Quantidade<input name="quantity" type="number" min="0.001" max="999999999" step="0.001" value="{{ item.quantity if item.quantity is not none else '' }}" placeholder="Por indicar"></label><label>Unidade<input name="unit" value="{{ item.unit or '' }}" maxlength="40" placeholder="Por indicar"></label>
+<label>Marca<input name="brand" value="{{ item.brand or '' }}" maxlength="150"></label><label>Modelo<input name="model" value="{{ item.model or '' }}" maxlength="150"></label><label>Referência<input name="reference" value="{{ item.reference or '' }}" maxlength="150"></label></div>
+<label>Especificações — uma por linha, no formato Nome: valor<textarea name="specifications" rows="4" maxlength="6000">{% for key, value in item.specifications_json.items() %}{{ key }}: {{ value }}{{ '\n' }}{% endfor %}</textarea></label>

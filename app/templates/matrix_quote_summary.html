@@ -1,0 +1,2 @@
+<div class="matrix-summary">{% for label,key in [('Subtotal','subtotal'),('IVA','tax'),('Total','total'),('Margem bruta · interno','margin')] %}<div><small>{{ label }}</small><strong>{{ quote[key]|money(quote.currency) }}</strong></div>{% endfor %}</div>
+<p><a class="send" href="/matrices/{{ report_id }}/quote.pdf">Gerar cotação PDF · cliente</a> <small>Sem fornecedores, custos ou margem. Preenche empresa emissora e cliente antes de gerar.</small></p>

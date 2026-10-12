@@ -1,0 +1,14 @@
+{% extends 'requests_base.html' %}{% block content %}
+<h1>Catálogo de preços</h1><p>Preços persistentes por fornecedor. Importar novamente acrescenta histórico.</p>
+<form method="get"><input name="q" value="{{ q }}" placeholder="Produto ou referência"><button>Pesquisar</button></form>
+<details class="edit-card"><summary>Importar lista de preços ou proforma</summary>
+<form method="post" action="/catalog/import" enctype="multipart/form-data">
+<label>Fornecedor (opcional)<select name="supplier_id"><option value="">Identificar no documento</option>{% for supplier in suppliers.values() %}<option value="{{ supplier.id }}">{{ supplier.name }}</option>{% endfor %}</select></label>
+<input type="file" name="document" accept=".pdf,.xlsx,.csv,.txt,.png,.jpg,.jpeg" required><button class="send">Carregar e preparar</button>
+<p>Excel/CSV: mapeamento sem IA. PDF/imagem: extracção por blocos/páginas via OpenAI, iniciada no próximo passo.</p></form></details>
+<details><summary>Importações recentes / por concluir</summary>{% for record in imports %}<p><a href="/catalog/imports/{{ record.id }}">Importação #{{ record.id }}</a> · {{ record.status }} · {{ record.source_kind }}</p>{% endfor %}</details>
+{% if matrix %}<h2>Produtos associados · preços lado a lado</h2><div class="table-scroll"><table><thead><tr><th>Produto</th>{% for supplier in suppliers.values() %}<th>{{ supplier.name }}</th>{% endfor %}</tr></thead><tbody>{% for row in matrix.values() %}<tr><td>{{ row.name }}</td>{% for supplier in suppliers.values() %}<td>{% for price in row.cells.get(supplier.id,[]) %}{{ price.unit_price|money(price.currency or '') if price else 'Sem preço aceite' }}{% if price %} · {{ state(price) }}{% endif %}<br>{% else %}—{% endfor %}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% endif %}
+<div class="table-scroll"><table><thead><tr><th>Produto</th><th>Fornecedor</th><th>Último preço elegível</th><th>Estado</th><th>Associação</th></tr></thead><tbody>
+{% for product in products %}{% set price=prices[product.id] %}<tr><td><a href="/catalog/products/{{ product.id }}">{{ product.description }}</a><br>{{ product.reference or '' }}</td><td>{{ suppliers[product.supplier_id].name }}</td><td>{{ price.unit_price|money(price.currency or '') if price else 'Sem preço aceite' }}</td><td>{{ state(price) if price else 'Rever histórico' }}</td><td>{{ 'Produto #' ~ product.product_id if product.product_id else 'Por associar' }}</td></tr>{% endfor %}
+</tbody></table></div><p>{% if offset %}<a href="?offset={{ [0,offset-100]|max }}&q={{ q|urlencode }}">Anterior</a>{% endif %} · <a href="?offset={{ offset+100 }}&q={{ q|urlencode }}">Seguinte</a></p>
+{% endblock %}

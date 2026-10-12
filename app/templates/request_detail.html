@@ -1,0 +1,33 @@
+{% extends 'requests_base.html' %}
+{% block content %}
+<p class="eyebrow">REQUISIÇÃO #{{ purchase.id }} · RASCUNHO</p><h1>{{ purchase.title }}</h1>
+<p>Revê os artigos e consulta preços nos fornecedores que autorizaste. Nenhuma compra será efectuada.</p>
+<p><a class="send" href="/requests/{{ purchase.id }}/proformas">Importar preços de proforma</a></p>
+<form class="edit-card" action="/requests/{{ purchase.id }}" method="post">
+<label>Título<input name="title" value="{{ purchase.title }}" required maxlength="200"></label>
+<label>Condições e notas<textarea name="description" maxlength="5000">{{ purchase.description or '' }}</textarea></label>
+<button class="send">Guardar título e condições</button>
+</form>
+{% include 'purchase_summary.html' %}
+{% include 'price_results.html' %}
+{% if document_offers %}{% include 'document_offers.html' %}{% endif %}
+{% if previous_reviews %}<details class="edit-card"><summary>Revisões de pesquisas anteriores</summary>
+{% for offer in previous_reviews %}<section id="offer-{{ offer.id }}"><h3>{{ offer.product_name }} · Oferta #{{ offer.id }}</h3>
+{% with result={'stale': true} %}{% include 'offer_review.html' %}{% endwith %}
+</section>{% endfor %}</details>{% endif %}
+<h2 class="edit-heading">Rever artigos</h2>
+<details class="edit-card" id="add-item"><summary>＋ Adicionar artigo manualmente</summary>
+<form method="post" action="/requests/{{ purchase.id }}/items">
+{% with item={'description':'', 'quantity':none, 'unit':'', 'brand':'', 'model':'', 'reference':'', 'specifications_json':{}} %}{% include 'item_fields.html' %}{% endwith %}
+<p class="draft-note">Sem chamada à IA. Deixa vazios os dados desconhecidos.</p><button class="send">Adicionar artigo</button>
+</form></details>
+{% for item in items %}
+<details id="item-{{ item.id }}" class="edit-card"><summary>{{ item.normalized_description or item.description }} <span>Editar ↓</span></summary>
+<form action="/requests/{{ purchase.id }}/items/{{ item.id }}" method="post">
+{% include 'item_fields.html' %}
+<p class="draft-note">Deixa os campos desconhecidos vazios. Alterações são guardadas apenas nesta requisição.</p><button class="send">Guardar artigo</button>
+</form>
+{% if item.id in removable_ids %}<form method="post" action="/requests/{{ purchase.id }}/items/{{ item.id }}/remove"><p class="draft-note">Sem pesquisas ou ofertas associadas.</p><button class="send">Remover este artigo</button></form>
+{% else %}<p class="draft-note">Este artigo tem histórico e não pode ser removido.</p>{% endif %}
+</details>{% endfor %}
+{% endblock %}

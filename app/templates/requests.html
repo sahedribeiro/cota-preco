@@ -1,0 +1,8 @@
+{% extends 'requests_base.html' %}
+{% block content %}
+<p class="eyebrow">ORGANIZA AS TUAS COMPRAS</p><h1>Requisições</h1>
+<p>Até 100 requisições mais recentes. Rascunhos guardados localmente, prontos para rever.</p>
+{% for purchase in purchases %}
+<a class="request-card" href="/requests/{{ purchase.id }}"><strong>{{ purchase.title }}</strong><span>#{{ purchase.id }} · Rascunho · {{ purchase.created_at.strftime('%d/%m/%Y') }} →</span></a>
+{% else %}<div class="request-card"><h2>A tua primeira requisição começa numa conversa.</h2><p>Explica ao Kota o que precisas e escolhe “Guardar requisição” no rascunho.</p><a href="/" class="send">Conversar com Kota →</a></div>{% endfor %}
+{% endblock %}

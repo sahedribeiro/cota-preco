@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-AO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cota.Preço.AI — Conversa com o Kota</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', path='logo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='tailwind.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v=matrix2">
+  <script src="{{ url_for('static', path='htmx.min.js') }}" defer></script>
+  <script src="{{ url_for('static', path='chat.js') }}?v=matrix2" defer></script>
+<script src="/static/csrf.js" defer></script></head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Cota.Preço.AI — início"><img class="brand-logo" src="{{ url_for('static', path='logo.png') }}" alt=""><span class="brand-name">Cota.Preço<span>.AI</span></span></a>
+      <p class="eyebrow">COMPRAS COM MAIS CLAREZA</p>
+      <nav aria-label="Menu principal" class="flex flex-col gap-3">
+        <a class="new-chat" href="/">＋ <span>Nova conversa</span></a>
+        <a class="requests-nav" href="/catalog">Catálogo de preços</a><a class="requests-nav" href="/suppliers">◈ <span>Fornecedores</span></a>
+        <a class="requests-nav" href="/requests">▤ <span>Requisições</span></a>
+        <a class="requests-nav" href="/matrices">◷ <span>Comparações</span></a>
+      </nav>
+      <form method="post" action="/logout"><button>Sair</button></form><div class="sidebar-note"><span class="status-dot"></span> Feito a pensar em Angola<p>Boas compras começam<br>com boas perguntas.</p></div>
+    </aside>
+    <main>
+      <header class="flex items-center justify-between"><div class="flex items-center gap-3"><span class="avatar small"><img src="{{ url_for('static', path='logo.png') }}" alt="Kota"></span><div><strong>Kota</strong><p>O teu assistente de compras</p></div></div><details class="help"><summary>Como pedir <span aria-hidden="true">↗</span></summary><div class="help-panel"><strong>Um bom pedido começa aqui.</strong><p>Indica o produto, a quantidade e as características importantes.</p><p class="help-example">“Preciso de 10 computadores i7, com 16 GB de RAM e SSD de 512 GB.”</p><p>Podes acrescentar o orçamento e o local de entrega.</p></div></details></header>
+      <section id="chat" class="chat" aria-label="Conversa com Kota">
+        <div class="welcome">
+          <span class="intro-tag"><span aria-hidden="true">✦</span> O TEU PRÓXIMO PEDIDO COMEÇA AQUI</span>
+          
+          <h1>Ya chefe.<br>Vamos <em>comprar melhor?</em></h1>
+          <p>Anexa até 5 proformas e compara os preços lado a lado.<br>Começa pela solicitação do cliente. Recebe a matriz e prepara a tua cotação.</p>
+          <p class="start-label">POR ONDE COMEÇAMOS?</p><div class="suggestions"><button type="button" data-prompt="Preciso de 10 computadores i7, 16 GB RAM e SSD 512."><span><i aria-hidden="true">▣</i> EQUIPAMENTO</span>Preciso de 10 computadores <b>↗</b></button><button type="button" data-prompt="Quero organizar uma lista de material de escritório."><span><i aria-hidden="true">☷</i> MATERIAL DE ESCRITÓRIO</span>Vamos organizar uma lista <b>↗</b></button></div>
+        </div>
+        <div id="messages" aria-live="polite" aria-relevant="additions">{% if message %}{% include 'messages.html' %}{% endif %}</div>
+      </section>
+      <div class="composer-area">
+        <p class="demo-note">Mensagens e texto dos anexos são enviados à OpenAI. Comparações guardadas no histórico.</p>
+        <form action="/matrices" method="post" enctype="multipart/form-data" hx-encoding="multipart/form-data" hx-post="/matrices" hx-target="#messages" hx-swap="beforeend" hx-disabled-elt="find button[type='submit']" hx-indicator="#sending">
+          <label for="message"><strong>1 · Solicitação do cliente</strong></label>
+          <textarea id="message" name="message" placeholder="Lista os artigos ou anexa a OC. Ex.: mais alto +60% + IVA, em nome da minha empresa." rows="2" maxlength="12000">{{ submitted_message | default('') }}</textarea>
+          <input id="solicitation" name="solicitation" type="file" accept=".pdf,.xlsx,.csv,.txt,.png,.jpg,.jpeg" aria-label="Solicitação do cliente">
+          <label for="document"><strong>2 · Proformas dos fornecedores</strong> · opcional, até 5</label>
+          <input id="document" name="proformas" type="file" multiple accept=".pdf,.xlsx,.csv,.txt,.png,.jpg,.jpeg" aria-label="Proformas dos fornecedores">
+          <p id="selected-files" class="draft-note">O fornecedor detectado aparece na comparação após processamento.</p>
+          <fieldset class="source-chips"><legend>Onde procurar preços?</legend>
+            <label><input type="checkbox" name="use_proformas" checked> Proformas anexadas</label>
+            <label><input type="checkbox" name="use_catalog" checked> Catálogo interno</label>
+            <label><input type="checkbox" name="use_online" id="use-online"> Lojas online</label>
+          </fieldset>
+          <div class="source-settings"><label>Só preços com menos de <input name="catalog_days" type="number" min="0" max="3650" value="60" style="width:70px"> dias (0 = todas as datas)</label>
+          <label>Moeda quando não indicada <select name="default_currency"><option value="AOA">AOA (assumida)</option value="">Por confirmar</option value="USD">USD (assumida)</option><option value="EUR">EUR (assumida)</option></select></label></div>
+          <details id="store-picker" hidden><summary>Lojas: Automático · escolher lojas</summary><input type="search" id="store-filter" placeholder="Procurar loja"><div class="store-options">{% for supplier in search_suppliers %}<label><input type="checkbox" name="supplier_ids" value="{{ supplier.id }}"> {{ supplier.name }}</label>{% else %}<p>Nenhuma loja com leitura activa.</p>{% endfor %}</div><small>Até 5. Sem selecção: lojas activas da categoria do pedido.</small></details>
+          <div class="flex items-center justify-between"><small>OC e proformas ficam separadas.</small><button class="send" type="submit" title="Enviar (Ctrl+Enter)" aria-keyshortcuts="Control+Enter">Comparar preços ↑ <small>Ctrl+Enter</small></button></div>
+        </form>
+        <p id="sending" class="htmx-indicator" role="status">Kota está a responder…</p>
+        <p id="chat-error" role="alert" {% if not error %}hidden{% endif %}>{{ error | default('') }}</p>
+        <p class="footer-note">O Kota não efectua compras, pagamentos nem contacta fornecedores.</p>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

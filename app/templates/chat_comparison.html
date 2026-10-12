@@ -1,0 +1,14 @@
+<article class="edit-card">
+<h2>{{ 'Preços encontrados nos fornecedores' if report.kind == 'web' else 'Comparação das proformas' }}</h2>
+{% for warning in report.web_warnings or [] %}<p>{{ warning }}</p>{% endfor %}
+<p>{{ report.documents|length }} fontes · {{ report.rows|length }} linhas agrupadas. Preços unitários das fontes indicadas. Confirma disponibilidade e condições antes de comprar.</p>
+<p><a class="send" href="/comparisons/{{ report_id }}/export.xlsx">Descarregar comparação Excel</a></p>
+<p>Reconhecemos variações de escrita, como portátil/laptop, unidade/un e RAM/SSD. Referências ou características diferentes continuam separadas. Moedas e tratamentos de IVA diferentes não são misturados. Com IVA desconhecido, menor/maior são apenas valores nominais.</p>
+<div style="overflow-x:auto"><table><thead><tr><th>Artigo</th>{% for doc in report.documents %}<th>{{ doc.label }}</th>{% endfor %}<th>Menor preço</th><th>Maior preço</th></tr></thead><tbody>
+{% for row in report.rows %}<tr><td>{{ row.product }}<br>{{ row.reference or '' }} · {{ row.unit or 'Unidade desconhecida' }}<br>{{ row.currency or 'Moeda desconhecida' }} · IVA {{ 'incluído' if row.vat is sameas true else 'excluído' if row.vat is sameas false else 'desconhecido' }}</td>
+{% for offers in row.offers %}<td>{% for offer in offers %}{{ offer.price|money(row.currency or '') if offer.price else 'Preço não identificado' }}<br><small>Qtd.: {{ offer.quantity or 'Desconhecida' }}</small><details><summary>Descrição original e evidência</summary>{{ offer.description or row.product }}<br>{{ offer.evidence }}</details>{% else %}—{% endfor %}</td>{% endfor %}
+<td><strong>{{ row.lowest|money(row.currency) if row.lowest else 'Sem comparação suficiente' }}</strong></td><td>{{ row.highest|money(row.currency) if row.highest else '—' }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% for doc in report.documents %}<p><strong>{{ doc.label }}</strong> · Data: {{ doc.draft.document_date or 'Desconhecida' }} · Validade: {{ doc.draft.valid_until or 'Desconhecida' }}<br>{{ doc.draft.warnings }}</p>{% endfor %}
+<p>Stock, transporte, descontos e condições de quantidade precisam de confirmação. Menor valor declarado não significa melhor oferta validada.</p>
+</article>

@@ -1,0 +1,11 @@
+<section class="edit-card">
+<h2>Resumo da compra</h2>
+<p>{{ summary.counted }} de {{ items|length }} artigos com total conhecido · {{ summary.pending }} por completar.</p>
+{% if summary.partial %}<p class="form-notice">Comparação parcial: algumas fontes falharam. Os valores abrangem apenas as ofertas recolhidas e comparáveis.</p>{% endif %}
+{% for key, total in summary.totals.items() %}<p><strong>{{ total|money(key[0]) }}</strong> · IVA {{ 'incluído' if key[1] else 'excluído' }} · subtotal conhecido</p>
+{% else %}<p>Ainda não há total calculável. Completa as quantidades e revê ou actualiza as ofertas.</p>{% endfor %}
+<p class="draft-note">Moedas e tratamentos de IVA diferentes são apresentados separadamente. Não inclui transporte, impostos em falta nem ofertas sem validação. Não constitui orçamento final.</p>
+<ul>{% for row in summary.rows if row.offer %}<li>{{ row.item.description }} · {{ row.supplier }} · {{ row.offer.unit_price|money(row.offer.currency) }} / {{ row.item.unit or 'unidade por confirmar' }} · <a href="#{{ 'document-offer-' if row.offer.document_line_key else 'offer-' }}{{ row.offer.id }}">{{ row.origin }}</a></li>{% endfor %}</ul>
+{% if summary.pending %}<details><summary>Ver artigos pendentes</summary><ul>{% for row in summary.rows if row.total is none %}<li><a href="#prices-{{ row.item.id }}">{{ row.item.description }}</a> — {{ row.reason }}</li>{% endfor %}</ul></details>{% endif %}
+<p><a class="send" href="/requests/{{ purchase.id }}/export.xlsx">Descarregar resumo Excel</a></p>
+</section>
